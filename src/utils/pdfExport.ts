@@ -117,7 +117,7 @@ export async function exportHtmlToPdf(
             color: #000000 !important;
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
-            font-size: 13.5px !important;
+            font-size: 12.5pt !important;
             font-weight: bold !important;
             line-height: 1.4 !important;
             padding: 8px 6px !important;
@@ -128,8 +128,8 @@ export async function exportHtmlToPdf(
             color: #000000 !important;
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
-            font-size: 13px !important;
-            line-height: 1.4 !important;
+            font-size: 12pt !important;
+            line-height: 1.5 !important;
           }
         `;
         clonedDoc.head.appendChild(injectedStyle);
@@ -157,7 +157,7 @@ export async function exportHtmlToPdf(
               th.style.border = '1px solid #000000';
               if (!th.style.padding) th.style.padding = '8px 6px';
               th.style.fontWeight = 'bold';
-              th.style.fontSize = '13.5px';
+              th.style.fontSize = '12.5pt';
               th.style.lineHeight = '1.4';
               th.style.backgroundColor = '#f8fafc';
               th.style.color = '#000000';
@@ -167,8 +167,8 @@ export async function exportHtmlToPdf(
             tbl.querySelectorAll<HTMLTableCellElement>('td').forEach((td) => {
               td.style.border = '1px solid #000000';
               if (!td.style.padding) td.style.padding = '8px 6px';
-              td.style.fontSize = '13px';
-              td.style.lineHeight = '1.4';
+              td.style.fontSize = '12pt';
+              td.style.lineHeight = '1.5';
               td.style.color = '#000000';
               td.style.boxSizing = 'border-box';
             });
