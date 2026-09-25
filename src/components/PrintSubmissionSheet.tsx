@@ -550,15 +550,15 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
                     <tbody>
                       {room.students.map((st, idx) => (
                         <tr key={st.id}>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}>{idx + 1}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.soBD}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'left', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.hoTen}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.lop}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', whiteSpace: 'nowrap' }}>{st.ngaySinh}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
-                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}>{st.ghiChu || ''}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}>{idx + 1}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.soBD}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'left', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.hoTen}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.lop}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', whiteSpace: 'nowrap' }}>{st.ngaySinh}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
+                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}>{st.ghiChu || ''}</td>
                         </tr>
                       ))}
                     </tbody>

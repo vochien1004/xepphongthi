@@ -128,7 +128,7 @@ export async function exportHtmlToPdf(
             color: #000000 !important;
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
-            font-size: 14px !important;
+            font-size: 16px !important;
             line-height: 1.4 !important;
             padding: 10px 8px !important;
           }
@@ -168,7 +168,7 @@ export async function exportHtmlToPdf(
             tbl.querySelectorAll<HTMLTableCellElement>('td').forEach((td) => {
               td.style.border = '1px solid #000000';
               td.style.padding = '10px 8px';
-              td.style.fontSize = '14px';
+              td.style.fontSize = '16px';
               td.style.lineHeight = '1.4';
               td.style.color = '#000000';
               td.style.boxSizing = 'border-box';
