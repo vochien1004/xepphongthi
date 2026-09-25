@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+}
+
+/* Custom sleek scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Administrative document font style */
+.font-admin {
+  font-family: 'Times New Roman', 'Tinos', Times, serif !important;
+  font-size: 12pt;
+}
+
+/* Administrative header layout table */
+table.admin-header-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border: none !important;
+  margin-bottom: 12px !important;
+}
+
+table.admin-header-table td {
+  border: none !important;
+  padding: 0 !important;
+  vertical-align: top !important;
+  text-align: center !important;
+}
+
+/* Strict solid black borders for administrative tables (applies on screen preview and html2canvas) */
+table.admin-table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  border: 1px solid #000000 !important;
+  table-layout: fixed !important;
+}
+
+table.admin-table th,
+table.admin-table td {
+  border: 1px solid #000000 !important;
+  color: #000000 !important;
+  padding: 4px 6px !important;
+  box-sizing: border-box !important;
+}
+
+/* Print specific styles */
+@media print {
+  /* Hide all UI navigation, controls, headers, buttons, toast, scrollbars */
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-family: 'Tinos', 'Times New Roman', Times, serif !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-page {
+    width: 100% !important;
+    min-height: 100vh !important;
+    padding: 10mm 12mm !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    color: black !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Two student cards per page option */
+  .print-card-half {
+    min-height: 48vh !important;
+    padding: 6mm 10mm !important;
+    box-sizing: border-box !important;
+    border-bottom: 1px dashed #666;
+    margin-bottom: 8mm;
+  }
+
+  .print-card-half:nth-child(2n) {
+    border-bottom: none;
+    page-break-after: always !important;
+    break-after: page !important;
+    margin-bottom: 0;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+}
+
+/* High-contrast crisp border helper for screen preview */
+.border-admin {
+  border-collapse: collapse;
+}
+.border-admin th,
+.border-admin td {
+  border: 1px solid #1e293b;
+}

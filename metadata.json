@@ -1,0 +1,6 @@
+{
+  "name": "Hệ Thống Xếp Phòng Thi & Xuất Giấy Tờ Thi",
+  "description": "Ứng dụng chuyên nghiệp xếp phòng thi tự động, quản lý lịch thi và in ấn danh sách phòng thi, phiếu thu bài, phiếu báo thi chuẩn hành chính",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
