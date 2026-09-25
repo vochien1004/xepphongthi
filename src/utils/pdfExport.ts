@@ -117,10 +117,12 @@ export async function exportHtmlToPdf(
             color: #000000 !important;
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
-            font-size: 14px !important;
+            font-size: 16px !important;
             font-weight: bold !important;
-            line-height: 1.4 !important;
-            padding: 10px 4px !important;
+            line-height: 1.25 !important;
+            vertical-align: middle !important;
+            font-stretch: normal !important;
+            padding: 5px 6px !important;
             background-color: #f8fafc !important;
           }
           table.admin-table td {
@@ -129,8 +131,10 @@ export async function exportHtmlToPdf(
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
             font-size: 16px !important;
-            line-height: 1.4 !important;
-            padding: 10px 8px !important;
+            line-height: 1.25 !important;
+            vertical-align: middle !important;
+            font-stretch: normal !important;
+            padding: 5px 6px !important;
           }
         `;
         clonedDoc.head.appendChild(injectedStyle);
@@ -156,10 +160,12 @@ export async function exportHtmlToPdf(
 
             tbl.querySelectorAll<HTMLTableCellElement>('th').forEach((th) => {
               th.style.border = '1px solid #000000';
-              if (!th.style.padding) th.style.padding = '8px 6px';
+              th.style.padding = '5px 6px';
               th.style.fontWeight = 'bold';
-              th.style.fontSize = '15pt';
-              th.style.lineHeight = '1.4';
+              th.style.fontSize = '16px';
+              th.style.lineHeight = '1.25';
+              th.style.verticalAlign = 'middle';
+              th.style.fontStretch = 'normal';
               th.style.backgroundColor = '#f8fafc';
               th.style.color = '#000000';
               th.style.boxSizing = 'border-box';
@@ -167,9 +173,11 @@ export async function exportHtmlToPdf(
 
             tbl.querySelectorAll<HTMLTableCellElement>('td').forEach((td) => {
               td.style.border = '1px solid #000000';
-              td.style.padding = '10px 8px';
+              td.style.padding = '5px 6px';
               td.style.fontSize = '16px';
-              td.style.lineHeight = '1.4';
+              td.style.lineHeight = '1.25';
+              td.style.verticalAlign = 'middle';
+              td.style.fontStretch = 'normal';
               td.style.color = '#000000';
               td.style.boxSizing = 'border-box';
             });
