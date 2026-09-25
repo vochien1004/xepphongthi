@@ -76,7 +76,7 @@ export async function exportHtmlToPdf(
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: 1200,
+      windowWidth: 794,
       onclone: (clonedDoc, clonedTarget) => {
         // Inject explicit CSS rules directly into cloned document head to ensure borders and layouts render reliably in production builds
         const injectedStyle = clonedDoc.createElement('style');
@@ -117,10 +117,10 @@ export async function exportHtmlToPdf(
             color: #000000 !important;
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
-            font-size: 12.5pt !important;
+            font-size: 14px !important;
             font-weight: bold !important;
             line-height: 1.4 !important;
-            padding: 8px 6px !important;
+            padding: 10px 4px !important;
             background-color: #f8fafc !important;
           }
           table.admin-table td {
@@ -128,8 +128,9 @@ export async function exportHtmlToPdf(
             color: #000000 !important;
             box-sizing: border-box !important;
             font-family: 'Times New Roman', 'Tinos', Times, serif !important;
-            font-size: 12pt !important;
-            line-height: 1.5 !important;
+            font-size: 14px !important;
+            line-height: 1.4 !important;
+            padding: 10px 8px !important;
           }
         `;
         clonedDoc.head.appendChild(injectedStyle);
@@ -157,7 +158,7 @@ export async function exportHtmlToPdf(
               th.style.border = '1px solid #000000';
               if (!th.style.padding) th.style.padding = '8px 6px';
               th.style.fontWeight = 'bold';
-              th.style.fontSize = '12.5pt';
+              th.style.fontSize = '15pt';
               th.style.lineHeight = '1.4';
               th.style.backgroundColor = '#f8fafc';
               th.style.color = '#000000';
@@ -166,9 +167,9 @@ export async function exportHtmlToPdf(
 
             tbl.querySelectorAll<HTMLTableCellElement>('td').forEach((td) => {
               td.style.border = '1px solid #000000';
-              if (!td.style.padding) td.style.padding = '8px 6px';
-              td.style.fontSize = '12pt';
-              td.style.lineHeight = '1.5';
+              td.style.padding = '10px 8px';
+              td.style.fontSize = '14px';
+              td.style.lineHeight = '1.4';
               td.style.color = '#000000';
               td.style.boxSizing = 'border-box';
             });

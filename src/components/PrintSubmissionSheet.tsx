@@ -482,22 +482,22 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
               style={{ fontFamily: "'Times New Roman', Tinos, Times, serif", fontSize: '12pt', border: 'none' }}
             >
               {/* TOP HEADER */}
-              <table className="admin-header-table w-full mb-3 text-[12pt]" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', marginBottom: '12px' }}>
+              <table className="admin-header-table w-full mb-3" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', marginBottom: '12px', fontSize: '14px', lineHeight: '1.4' }}>
                 <tbody>
                   <tr>
-                    <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: 0 }}>
-                      <div className="text-[12pt] font-normal uppercase tracking-wide">
+                    <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: 0, fontSize: '14px', lineHeight: '1.4' }}>
+                      <div style={{ fontSize: '14px', lineHeight: '1.4', fontWeight: 'normal', textTransform: 'uppercase' }}>
                         {config.subDepartment || 'SỞ GIÁO DỤC ĐÀO TẠO QUẢNG NGÃI'}
                       </div>
-                      <div className="text-[12pt] font-bold uppercase tracking-tight underline underline-offset-4">
+                      <div style={{ fontSize: '14px', lineHeight: '1.4', fontWeight: 'bold', textTransform: 'uppercase', textDecoration: 'underline' }}>
                         {config.schoolName || 'TRƯỜNG PT DTNT THPT SA THẦY'}
                       </div>
                     </td>
-                    <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: 0 }}>
-                      <div className="text-[12pt] font-bold uppercase">
+                    <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: 0, fontSize: '14px', lineHeight: '1.4' }}>
+                      <div style={{ fontSize: '14px', lineHeight: '1.4', fontWeight: 'bold', textTransform: 'uppercase' }}>
                         CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
                       </div>
-                      <div className="text-[12pt] font-bold underline underline-offset-4">
+                      <div style={{ fontSize: '14px', lineHeight: '1.4', fontWeight: 'bold', textDecoration: 'underline' }}>
                         Độc lập - Tự do - Hạnh phúc
                       </div>
                     </td>
@@ -507,11 +507,11 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
 
               {/* MAIN TITLE */}
               <div style={{ textAlign: 'center', marginTop: '12px', marginBottom: '8px' }}>
-                <h1 style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.025em', margin: 0, lineHeight: 1.3 }}>
+                <h1 style={{ fontSize: '20px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.025em', margin: 0, lineHeight: 1.3 }}>
                   {getExamTitles(config).submissionSheetTitle}
                 </h1>
 
-                <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: '#000000', marginTop: '6px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'center', color: '#000000', marginTop: '6px', marginBottom: '18px' }}>
                   <span>KHỐI: {room.grade}</span>
                   <span style={{ margin: '0 8px' }}>-</span>
                   <span>PHÒNG: {room.roomCode}</span>
@@ -522,19 +522,6 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
 
               {/* TABLE */}
               {(() => {
-                const len = room.students.length;
-                const py = len <= 10 
-                  ? '14pt' 
-                  : len <= 15 
-                  ? '11.5pt' 
-                  : len <= 20 
-                  ? '9.5pt' 
-                  : len <= 25 
-                  ? '8pt' 
-                  : '6.5pt';
-                const rowPadding = `${py} 6px`;
-                const rowPaddingText = `${py} 8px`;
-
                 return (
                   <table 
                     className="admin-table w-full"
@@ -549,29 +536,29 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
                   >
                     <thead>
                       <tr style={{ backgroundColor: '#f8fafc', fontWeight: 'bold', textAlign: 'center' }}>
-                        <th style={{ width: '5%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4 }}>TT</th>
-                        <th style={{ width: '8%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Số BD</th>
-                        <th style={{ width: '33%', border: '1px solid #000000', padding: '10px 8px', textAlign: 'left', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Họ và tên</th>
-                        <th style={{ width: '7%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Lớp</th>
-                        <th style={{ width: '12%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Ngày sinh</th>
-                        <th style={{ width: '11%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4 }}>Mã đề/số tờ</th>
-                        <th style={{ width: '10%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4 }}>Ký tên</th>
-                        <th style={{ width: '6%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4 }}>Điểm</th>
-                        <th style={{ width: '8%', border: '1px solid #000000', padding: '10px 6px', textAlign: 'center', fontSize: '12.5pt', fontWeight: 'bold', lineHeight: 1.4 }}>Ghi chú</th>
+                        <th style={{ width: '5%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4 }}>TT</th>
+                        <th style={{ width: '8%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Số BD</th>
+                        <th style={{ width: '33%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'left', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Họ và tên</th>
+                        <th style={{ width: '7%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Lớp</th>
+                        <th style={{ width: '12%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4, whiteSpace: 'nowrap' }}>Ngày sinh</th>
+                        <th style={{ width: '11%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4 }}>Mã đề/số tờ</th>
+                        <th style={{ width: '10%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4 }}>Ký tên</th>
+                        <th style={{ width: '6%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4 }}>Điểm</th>
+                        <th style={{ width: '8%', border: '1px solid #000000', fontSize: '14px', fontWeight: 'bold', padding: '10px 4px', textAlign: 'center', lineHeight: 1.4 }}>Ghi chú</th>
                       </tr>
                     </thead>
                     <tbody>
                       {room.students.map((st, idx) => (
                         <tr key={st.id}>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5 }}>{idx + 1}</td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', lineHeight: 1.5, whiteSpace: 'nowrap' }}>{st.soBD}</td>
-                          <td style={{ border: '1px solid #000000', padding: rowPaddingText, textAlign: 'left', fontWeight: '500', fontSize: '12pt', lineHeight: 1.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.hoTen}</td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5, whiteSpace: 'nowrap' }}>{st.lop}</td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5, whiteSpace: 'nowrap' }}>{st.ngaySinh}</td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5 }}></td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5 }}></td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5 }}></td>
-                          <td style={{ border: '1px solid #000000', padding: rowPadding, textAlign: 'center', fontSize: '12pt', lineHeight: 1.5 }}>{st.ghiChu || ''}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}>{idx + 1}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.soBD}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'left', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.hoTen}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.lop}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center', whiteSpace: 'nowrap' }}>{st.ngaySinh}</td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}></td>
+                          <td style={{ border: '1px solid #000000', fontSize: '14px', padding: '10px 8px', lineHeight: '1.4', textAlign: 'center' }}>{st.ghiChu || ''}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -580,14 +567,14 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
               })()}
 
               {/* FOOTER STATS */}
-              <div style={{ fontSize: '12pt', lineHeight: 1.6, marginTop: '12px' }} className="space-y-1">
-                <div>
-                  - Tổng số thí sinh theo danh sách: <strong>{room.students.length}</strong> học sinh.
+              <div style={{ fontSize: '14px', lineHeight: '1.8', marginTop: '12px' }} className="space-y-1">
+                <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
+                  - Tổng số thí sinh theo danh sách: <strong style={{ fontSize: '14px' }}>{room.students.length}</strong> học sinh.
                 </div>
-                <div>
+                <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
                   - Tổng số bài thu được: ............... bài / ............... tờ giấy thi.
                 </div>
-                <div>
+                <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
                   - Tổng số thí sinh vắng: ...... Gồm các số BD: ..........................................................................................
                 </div>
               </div>
@@ -597,18 +584,18 @@ export const PrintSubmissionSheet: React.FC<PrintSubmissionSheetProps> = ({
                 <tbody>
                   <tr>
                     <td style={{ width: '33.33%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: '16px 8px' }}>
-                      <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12.5pt', lineHeight: 1.3 }}>Giáo viên chấm</div>
-                      <div style={{ fontStyle: 'italic', fontSize: '11pt', color: '#475569', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: 1.3 }}>Giáo viên chấm</div>
+                      <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#475569', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
                       <div style={{ minHeight: '90px', height: '90px' }}></div>
                     </td>
                     <td style={{ width: '33.33%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: '16px 8px' }}>
-                      <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12.5pt', lineHeight: 1.3 }}>Giám thị 1</div>
-                      <div style={{ fontStyle: 'italic', fontSize: '11pt', color: '#475569', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: 1.3 }}>Giám thị 1</div>
+                      <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#475569', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
                       <div style={{ minHeight: '90px', height: '90px' }}></div>
                     </td>
                     <td style={{ width: '33.33%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: '16px 8px' }}>
-                      <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12.5pt', lineHeight: 1.3 }}>Giám thị 2</div>
-                      <div style={{ fontStyle: 'italic', fontSize: '11pt', color: '#475569', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: 1.3 }}>Giám thị 2</div>
+                      <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#475569', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
                       <div style={{ minHeight: '90px', height: '90px' }}></div>
                     </td>
                   </tr>
