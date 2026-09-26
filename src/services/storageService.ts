@@ -468,6 +468,45 @@ export async function batchSaveStudentsToFirestore(
 }
 
 /**
+ * Clears all student and class data both locally in localStorage and on Firebase Firestore.
+ * Other settings such as subjects, schedules, school info, and exam settings remain strictly intact.
+ */
+export async function clearAllStudentsAndClassesFromFirebase(
+  settings: FirebaseSettings,
+  currentConfig: ExamRoomConfig,
+  subjects: Subject[],
+  schedules: ExamSchedule[]
+): Promise<{ success: boolean; message: string; updatedConfig: ExamRoomConfig }> {
+  const updatedConfig: ExamRoomConfig = {
+    ...currentConfig,
+    customClasses: [],
+    classSubjects: {},
+  };
+
+  // 1. Immediately clear in LocalStorage
+  saveLocalStudents([]);
+  saveLocalConfig(updatedConfig);
+
+  // 2. Sync clean student and class state to Firebase Firestore
+  const syncResult = await syncDataToFirebase(
+    settings,
+    [],
+    updatedConfig,
+    subjects,
+    schedules,
+    []
+  );
+
+  return {
+    success: syncResult.success,
+    message: syncResult.success
+      ? 'Đã xóa toàn bộ học sinh và lớp học trên chương trình và Firebase! Môn học, lịch thi và các cấu hình khác được giữ nguyên.'
+      : `Đã xóa học sinh và lớp học cục bộ. Lưu ý Firebase: ${syncResult.message}`,
+    updatedConfig,
+  };
+}
+
+/**
  * Pulls complete snapshot of data from Firebase Firestore
  */
 export async function pullDataFromFirebase(settings: FirebaseSettings): Promise<{

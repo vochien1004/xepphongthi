@@ -34,6 +34,8 @@ interface StudentManagerProps {
   onUpdateStudents: (students: Student[]) => void;
   firebaseSettings: FirebaseSettings;
   config: ExamRoomConfig;
+  onUpdateConfig?: (config: ExamRoomConfig) => void;
+  onClearAllStudentsAndClasses?: () => Promise<{ success: boolean; message: string }>;
   subjects: Subject[];
   schedules: ExamSchedule[];
   onNavigateToConfig?: () => void;
@@ -44,6 +46,8 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   onUpdateStudents,
   firebaseSettings,
   config,
+  onUpdateConfig,
+  onClearAllStudentsAndClasses,
   subjects,
   schedules,
   onNavigateToConfig,
@@ -82,6 +86,11 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
   // Extract unique grades and classes
   const uniqueGrades = Array.from(new Set(students.map((s) => s.khoi).filter(Boolean))).sort((a, b) => Number(a) - Number(b));
   const uniqueClasses = Array.from(new Set(students.map((s) => s.lop).filter(Boolean))).sort();
+
+  const hasDataToClear =
+    students.length > 0 ||
+    (config.customClasses && config.customClasses.length > 0) ||
+    (config.classSubjects && Object.keys(config.classSubjects).length > 0);
 
   // Filter students
   const filteredStudents = students.filter((s) => {
@@ -239,18 +248,41 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
     }
   };
 
-  // Execute clear all students with isSubmitting lock
+  // Execute clear all students and classes with isSubmitting lock
   const executeClearAll = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+    setUploadError(null);
 
     try {
-      onUpdateStudents([]);
-      setIsClearAllModalOpen(false);
+      if (onClearAllStudentsAndClasses) {
+        const res = await onClearAllStudentsAndClasses();
+        setIsClearAllModalOpen(false);
+        if (res.success) {
+          setUploadSuccess(res.message);
+        } else {
+          setUploadSuccess('Đã xóa dữ liệu học sinh và lớp học trên chương trình.');
+          setUploadError(`Lưu ý Firebase: ${res.message}`);
+        }
+      } else {
+        const updatedConfig: ExamRoomConfig = {
+          ...config,
+          customClasses: [],
+          classSubjects: {},
+        };
+        onUpdateStudents([]);
+        if (onUpdateConfig) {
+          onUpdateConfig(updatedConfig);
+        }
+        setIsClearAllModalOpen(false);
 
-      // Immediate Firestore batch update with empty student list
-      await syncDataToFirebase(firebaseSettings, [], config, subjects, schedules, []);
-      setUploadSuccess('Đã xóa toàn bộ danh sách học sinh và làm sạch dữ liệu trên Firebase!');
+        const res = await syncDataToFirebase(firebaseSettings, [], updatedConfig, subjects, schedules, []);
+        if (res.success) {
+          setUploadSuccess('Đã xóa toàn bộ học sinh, lớp học trên chương trình và Firebase! Môn học, lịch thi và các cấu hình khác được giữ nguyên.');
+        } else {
+          setUploadError(`Lỗi khi xóa danh sách trên Firebase: ${res.message}`);
+        }
+      }
     } catch (err: any) {
       setUploadError(`Lỗi khi xóa danh sách: ${err.message || err}`);
     } finally {
@@ -441,7 +473,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
             </button>
             <button
               onClick={() => setIsClearAllModalOpen(true)}
-              disabled={students.length === 0 || isSubmitting || isUploading}
+              disabled={!hasDataToClear || isSubmitting || isUploading}
               className="w-full flex items-center justify-center space-x-2 bg-rose-50 hover:bg-rose-100 disabled:opacity-40 text-rose-700 font-semibold text-xs py-2.5 px-4 rounded-xl transition border border-rose-200 cursor-pointer disabled:cursor-not-allowed"
             >
               <Trash2 className="w-4 h-4" />
@@ -816,7 +848,7 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
         </div>
       )}
 
-      {/* Modal Confirm Clear All Students */}
+      {/* Modal Confirm Clear All Students & Classes */}
       {isClearAllModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
@@ -824,9 +856,9 @@ export const StudentManager: React.FC<StudentManagerProps> = ({
               <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Xóa TOÀN BỘ học sinh?</h3>
+              <h3 className="text-base font-bold text-slate-900">Xóa TOÀN BỘ học sinh & lớp học?</h3>
               <p className="text-xs text-slate-600 mt-2">
-                Hành động này sẽ xóa toàn bộ <strong>{students.length} học sinh</strong> hiện tại và làm sạch cơ sở dữ liệu trên Firebase Firestore.
+                Hành động này sẽ xóa toàn bộ <strong>{students.length} học sinh</strong> cùng toàn bộ thông tin lớp học hiện tại trên cả chương trình và Firebase. Các cấu hình môn học, lịch thi và cài đặt khác sẽ được giữ nguyên vẹn.
               </p>
               <div className="mt-5 flex space-x-2 justify-center">
                 <button

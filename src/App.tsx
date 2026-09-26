@@ -21,6 +21,7 @@ import {
   subscribeToFirebaseRealtime,
   syncDataToFirebase,
   pullDataFromFirebase,
+  clearAllStudentsAndClassesFromFirebase,
 } from './services/storageService';
 import { arrangeRooms } from './utils/roomArranger';
 import { getExamTitles } from './utils/examTitleHelper';
@@ -225,6 +226,42 @@ export default function App() {
     pushLocalChangesToCloud(students, config, subjects, newSchedules);
   };
 
+  const handleClearAllStudentsAndClasses = async (): Promise<{ success: boolean; message: string }> => {
+    // 1. Cancel any pending debounce cloud pushes to prevent race condition overwrite
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    const updatedConfig: ExamRoomConfig = {
+      ...config,
+      customClasses: [],
+      classSubjects: {},
+    };
+
+    // 2. Clear state locally in App
+    setStudents([]);
+    setConfig(updatedConfig);
+
+    setSyncStatus((prev) => ({ ...prev, state: 'syncing' }));
+
+    // 3. Atomically update LocalStorage and Firebase Firestore
+    const res = await clearAllStudentsAndClassesFromFirebase(
+      firebaseSettings,
+      config,
+      subjects,
+      schedules
+    );
+
+    if (res.success) {
+      setSyncStatus({ state: 'connected', lastSynced: new Date() });
+    } else {
+      setSyncStatus({ state: 'error', error: res.message });
+    }
+
+    return res;
+  };
+
   const handleDataLoadedFromFirebase = (data: {
     students: Student[];
     config: ExamRoomConfig;
@@ -423,6 +460,8 @@ export default function App() {
               onUpdateStudents={handleUpdateStudents}
               firebaseSettings={firebaseSettings}
               config={config}
+              onUpdateConfig={handleUpdateConfig}
+              onClearAllStudentsAndClasses={handleClearAllStudentsAndClasses}
               subjects={subjects}
               schedules={schedules}
               onNavigateToConfig={() => setActiveTab('config')}
