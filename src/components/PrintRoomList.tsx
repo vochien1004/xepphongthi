@@ -505,12 +505,6 @@ export const PrintRoomList: React.FC<PrintRoomListProps> = ({
                       </div>
                     </td>
                     <td style={{ width: '50%', textAlign: 'center', verticalAlign: 'top', border: 'none', padding: 0, fontSize: '16px', lineHeight: '1.4' }}>
-                      <div style={{ fontSize: '16px', lineHeight: '1.4', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                        CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-                      </div>
-                      <div style={{ fontSize: '16px', lineHeight: '1.4', fontWeight: 'bold', textDecoration: 'underline' }}>
-                        Độc lập - Tự do - Hạnh phúc
-                      </div>
                     </td>
                   </tr>
                 </tbody>
