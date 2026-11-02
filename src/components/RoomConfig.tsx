@@ -83,18 +83,14 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     return subjects.filter((sub) => sub.grades.includes(selectedGrade) || sub.grades.length === 0);
   }, [subjects, selectedGrade]);
 
-  // Multi-subject selection state (array of subject IDs)
+  // Multi-subject selection state (array of subject IDs) - default empty so admin chooses manually
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
-  const [applyToGradeDefault, setApplyToGradeDefault] = useState<boolean>(true);
+  const [applyToGradeDefault, setApplyToGradeDefault] = useState<boolean>(false);
 
-  // Auto-initialize selected subjects when Grade or Subjects change
+  // Reset selected subjects to empty when Grade changes so admin manually selects subjects to allocate
   useEffect(() => {
-    if (gradeSubjects.length > 0) {
-      setSelectedSubjectIds(gradeSubjects.map((s) => s.id));
-    } else {
-      setSelectedSubjectIds([]);
-    }
-  }, [selectedGrade, gradeSubjects.length]);
+    setSelectedSubjectIds([]);
+  }, [selectedGrade]);
 
   // Ensure selectedGrade is valid when dynamicGrades change
   useEffect(() => {
@@ -156,6 +152,48 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     return filtered.length;
   };
 
+  // Evaluate room allocation status for a single subject in the selected grade
+  const getSubjectAllocationInfo = (subId: string) => {
+    const count = getSubjectStudentCount(subId);
+    const plan = config.manualRoomPlans?.[`${selectedGrade}_${subId}`];
+    const hasPlan = Boolean(plan && Array.isArray(plan.rooms) && plan.rooms.length > 0);
+
+    if (!hasPlan || !plan) {
+      return {
+        count,
+        isAllocated: false,
+        roomCount: 0,
+        allocatedSeats: 0,
+        diff: 0,
+        status: 'unallocated' as const,
+      };
+    }
+
+    const roomCount = plan.rooms.length;
+    const allocatedSeats = plan.rooms.reduce((sum, r) => sum + (Number(r.capacity) || 0), 0);
+    const diff = allocatedSeats - count;
+
+    let status: 'unallocated' | 'matched' | 'shortage' | 'surplus' = 'matched';
+    if (count === 0 && allocatedSeats === 0) {
+      status = 'unallocated';
+    } else if (diff < 0) {
+      status = 'shortage';
+    } else if (diff > 0) {
+      status = 'surplus';
+    } else {
+      status = 'matched';
+    }
+
+    return {
+      count,
+      isAllocated: status !== 'unallocated',
+      roomCount,
+      allocatedSeats,
+      diff,
+      status,
+    };
+  };
+
   // Calculate representative total eligible students for currently selected subjects
   const totalEligibleCount = useMemo(() => {
     const totalInGrade = students.filter((s) => (s.khoi || '').trim() === selectedGrade.trim()).length;
@@ -196,7 +234,6 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     let remaining = totalEligibleCount;
 
     for (let i = 1; i <= estimatedRoomsCount; i++) {
-      const cap = Math.min(defaultCap, remaining > 0 ? remaining : defaultCap);
       initialRooms.push({
         roomCode: `${config.roomPrefix || 'P'}${i}`,
         roomNumber: i,
@@ -221,8 +258,13 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
 
   const seatDifference = totalAllocatedSeats - totalEligibleCount;
 
-  // Save updated plan to config (persists for all selected subjects + grade default)
+  // Save updated plan to config (persists for all selected subjects + optional grade default)
   const handleSavePlan = (updatedPlan: GradeSubjectRoomPlan, toastMsg?: string) => {
+    if (selectedSubjectIds.length === 0 && !applyToGradeDefault) {
+      showToast('⚠️ Vui lòng tích chọn ít nhất 1 môn thi ở mục 2 để phân phòng!');
+      return;
+    }
+
     const updatedPlans = { ...(config.manualRoomPlans || {}) };
 
     // Save for every checked subject
@@ -234,8 +276,8 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       };
     });
 
-    // Also update Grade default template if applyToGradeDefault is true or all subjects selected
-    if (applyToGradeDefault || selectedSubjectIds.length === 0 || selectedSubjectIds.length === gradeSubjects.length) {
+    // Also update Grade default template if applyToGradeDefault is explicitly checked or all subjects selected
+    if (applyToGradeDefault || (selectedSubjectIds.length > 0 && selectedSubjectIds.length === gradeSubjects.length)) {
       updatedPlans[selectedGrade] = {
         ...updatedPlan,
         grade: selectedGrade,
@@ -818,10 +860,30 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
 
               {/* Status & Quick Action Buttons */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs bg-indigo-50 text-indigo-800 border border-indigo-200 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1">
-                  <CheckCheck className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Đã chọn: <strong>{selectedSubjectIds.length}</strong> / {gradeSubjects.length} môn</span>
-                </span>
+                {(() => {
+                  const statusList = gradeSubjects.map((s) => getSubjectAllocationInfo(s.id));
+                  const matchedCount = statusList.filter((st) => st.status === 'matched').length;
+                  const warningCount = statusList.filter((st) => st.status === 'shortage' || st.status === 'surplus').length;
+
+                  return (
+                    <>
+                      <span className="text-xs bg-indigo-50 text-indigo-800 border border-indigo-200 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1">
+                        <CheckCheck className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Đã chọn: <strong>{selectedSubjectIds.length}</strong> / {gradeSubjects.length} môn</span>
+                      </span>
+                      <span className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1.5 rounded-lg font-semibold flex items-center space-x-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Đã phân phòng: <strong>{matchedCount}</strong></span>
+                      </span>
+                      {warningCount > 0 && (
+                        <span className="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-2.5 py-1.5 rounded-lg font-semibold flex items-center space-x-1">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Dư/thiếu chỗ: <strong>{warningCount}</strong></span>
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
                 <button
                   type="button"
                   onClick={handleSelectAllSubjects}
@@ -874,35 +936,80 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-1">
                 {gradeSubjects.map((sub) => {
                   const isChecked = selectedSubjectIds.includes(sub.id);
-                  const count = getSubjectStudentCount(sub.id);
+                  const info = getSubjectAllocationInfo(sub.id);
+
+                  let cardStyle = 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-700';
+                  if (isChecked) {
+                    cardStyle = 'bg-blue-50/90 border-blue-500 ring-2 ring-blue-500/30 text-blue-950 shadow-2xs';
+                  } else if (info.status === 'matched') {
+                    cardStyle = 'bg-emerald-50/40 border-emerald-300 hover:bg-emerald-50/80 text-slate-800';
+                  } else if (info.status === 'shortage') {
+                    cardStyle = 'bg-rose-50/50 border-rose-300 hover:bg-rose-50/80 text-slate-800';
+                  } else if (info.status === 'surplus') {
+                    cardStyle = 'bg-amber-50/50 border-amber-300 hover:bg-amber-50/80 text-slate-800';
+                  }
 
                   return (
                     <label
                       key={sub.id}
                       onClick={() => handleToggleSubject(sub.id)}
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition select-none ${
-                        isChecked
-                          ? 'bg-blue-50/80 border-blue-400 ring-1 ring-blue-400/40 text-blue-950 shadow-2xs'
-                          : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-700'
-                      }`}
+                      className={`p-3 rounded-xl border flex flex-col justify-between gap-2 cursor-pointer transition select-none ${cardStyle}`}
                     >
-                      <div className="flex items-center space-x-2.5 truncate mr-2">
-                        <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition ${
-                          isChecked ? 'bg-blue-600 text-white' : 'border border-slate-300 bg-white'
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center space-x-2.5 truncate mr-2">
+                          <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition ${
+                            isChecked
+                              ? 'bg-blue-600 text-white'
+                              : info.status === 'matched'
+                              ? 'border border-emerald-400 bg-white text-emerald-600'
+                              : info.status === 'shortage'
+                              ? 'border border-rose-400 bg-white text-rose-600'
+                              : info.status === 'surplus'
+                              ? 'border border-amber-400 bg-white text-amber-600'
+                              : 'border border-slate-300 bg-white'
+                          }`}>
+                            {isChecked && <CheckSquare className="w-4 h-4" />}
+                          </div>
+                          <div className="truncate">
+                            <div className="font-bold text-xs truncate">{sub.name}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">Mã: {sub.code}</div>
+                          </div>
+                        </div>
+
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
+                          isChecked ? 'bg-blue-200/70 text-blue-900 font-bold' : 'bg-slate-200/70 text-slate-600'
                         }`}>
-                          {isChecked && <CheckSquare className="w-4 h-4" />}
-                        </div>
-                        <div className="truncate">
-                          <div className="font-bold text-xs truncate">{sub.name}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">Mã: {sub.code}</div>
-                        </div>
+                          {info.count} hs
+                        </span>
                       </div>
 
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
-                        isChecked ? 'bg-blue-200/60 text-blue-900 font-bold' : 'bg-slate-200/60 text-slate-600'
-                      }`}>
-                        {count} hs
-                      </span>
+                      {/* Allocation status / warning badge */}
+                      <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                        {info.status === 'matched' ? (
+                          <span className="inline-flex items-center space-x-1 font-semibold text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-md w-full">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span className="truncate">Đã phân phòng ({info.roomCount}P • {info.allocatedSeats}/{info.count} chỗ)</span>
+                          </span>
+                        ) : info.status === 'shortage' ? (
+                          <span className="inline-flex items-center space-x-1 font-semibold text-rose-700 bg-rose-100/90 border border-rose-200 px-2 py-0.5 rounded-md w-full">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                            <span className="truncate">Thiếu {Math.abs(info.diff)} chỗ ({info.allocatedSeats}/{info.count} • {info.roomCount}P)</span>
+                          </span>
+                        ) : info.status === 'surplus' ? (
+                          <span className="inline-flex items-center space-x-1 font-semibold text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-md w-full">
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span className="truncate">Dư {info.diff} chỗ ({info.allocatedSeats}/{info.count} • {info.roomCount}P)</span>
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center space-x-1 font-medium px-2 py-0.5 rounded-md w-full ${
+                            isChecked
+                              ? 'text-blue-700 bg-blue-100/80'
+                              : 'text-slate-400 bg-slate-100/80'
+                          }`}>
+                            <span className="truncate">{isChecked ? 'Đang chọn để phân phòng' : 'Chưa phân phòng'}</span>
+                          </span>
+                        )}
+                      </div>
                     </label>
                   );
                 })}

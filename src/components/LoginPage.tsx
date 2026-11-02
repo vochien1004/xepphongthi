@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
-import { 
-  Lock, 
-  User, 
-  Eye, 
-  EyeOff, 
-  GraduationCap, 
-  ShieldCheck, 
-  Sparkles, 
-  AlertCircle, 
+import {
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  ShieldCheck,
+  Sparkles,
+  AlertCircle,
   ArrowRight,
   Database,
   FileSpreadsheet,
-  Users
+  Users,
 } from 'lucide-react';
-import { loginUser, AuthUser } from '../services/authService';
+import { loginUserAsync, loginWithGoogleAsync, AuthUser } from '../services/authService';
+import { FirebaseSettings } from '../types';
 
 interface LoginPageProps {
   onLoginSuccess: (user: AuthUser) => void;
   schoolName?: string;
+  firebaseSettings?: FirebaseSettings;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ 
+export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
-  schoolName = 'Trường PT DTNT THPT Sa Thầy'
+  schoolName = 'Trường PT DTNT THPT Sa Thầy',
+  firebaseSettings,
 }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -30,22 +33,42 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
-    // Small delay for smooth realistic authentication feedback
-    setTimeout(() => {
-      const result = loginUser(username, password, rememberMe);
+    try {
+      const result = await loginUserAsync(username, password, rememberMe, firebaseSettings);
       if (result.success && result.user) {
         onLoginSuccess(result.user);
       } else {
         setError(result.message || 'Tên đăng nhập hoặc mật khẩu không chính xác!');
         setIsLoading(false);
       }
-    }, 450);
+    } catch (err: any) {
+      setError(err?.message || 'Lỗi xác thực tài khoản quản trị viên.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsGoogleLoading(true);
+    try {
+      const result = await loginWithGoogleAsync(rememberMe, firebaseSettings);
+      if (result.success && result.user) {
+        onLoginSuccess(result.user);
+      } else {
+        setError(result.message || 'Đăng nhập Google thất bại.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Đăng nhập Google thất bại.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -56,7 +79,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Main Container Card */}
       <div className="w-full max-w-4xl bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10">
-        
         {/* Left Visual Column (School Branding & Feature Highlights) */}
         <div className="lg:col-span-5 bg-gradient-to-br from-blue-900/80 via-indigo-900/60 to-slate-900 p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800/80 relative">
           <div className="space-y-6">
@@ -81,10 +103,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="p-4 rounded-2xl bg-slate-950/40 border border-blue-500/20 space-y-2">
               <div className="flex items-center space-x-2 text-xs font-bold text-blue-300">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Cổng Quản trị Viên An toàn</span>
+                <span>Cổng Quản trị Viên (role: admin)</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Đăng nhập để cấu hình phòng thi, quản lý thí sinh, xếp lịch thi tự động và xuất biểu mẫu PDF/Excel theo chuẩn quy chế.
+                Đăng nhập tài khoản Admin để kích hoạt toàn quyền đọc/ghi dữ liệu trên Firebase Firestore theo quy tắc bảo mật <code className="text-emerald-300 font-mono">isAdmin()</code>.
               </p>
             </div>
 
@@ -106,7 +128,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                   <Database className="w-4 h-4" />
                 </div>
-                <span>Đồng bộ dữ liệu thời gian thực Firebase</span>
+                <span>Xác thực Admin & đồng bộ thời gian thực Firebase</span>
               </div>
             </div>
           </div>
@@ -114,7 +136,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {/* Bottom Accreditation */}
           <div className="pt-6 mt-6 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
             <span>Phiên bản v2.6 Pro</span>
-            <span className="text-blue-400 font-medium">Bảo mật nội bộ</span>
+            <span className="text-blue-400 font-medium">Bảo mật RBAC Admin</span>
           </div>
         </div>
 
@@ -124,13 +146,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="mb-6">
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Xác thực quản trị viên</span>
+                <span>Xác thực quản trị viên (role: admin)</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Đăng nhập hệ thống
               </h2>
               <p className="text-sm text-slate-400 mt-1">
-                Vui lòng nhập thông tin xác thực để truy cập bảng điều khiển
+                Nhập tài khoản quản trị hoặc Email Admin trên Firebase Authentication
               </p>
             </div>
 
@@ -144,10 +166,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Username Input */}
+              {/* Username / Email Input */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-300">
-                  Tên đăng nhập <span className="text-rose-400">*</span>
+                  Tên đăng nhập hoặc Email Admin Firebase <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -158,7 +180,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Nhập tên đăng nhập"
+                    placeholder="admin hoặc email@domain.com"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
@@ -194,7 +216,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
 
-              {/* Remember Me & Quick Help */}
+              {/* Remember Me */}
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center space-x-2 cursor-pointer text-xs text-slate-300 select-none">
                   <input
@@ -203,20 +225,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="rounded border-slate-700 text-blue-600 focus:ring-blue-500/30 bg-slate-800"
                   />
-                  <span>Ghi nhớ đăng nhập</span>
+                  <span>Ghi nhớ phiên đăng nhập Admin</span>
                 </label>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
                 className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group"
               >
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Đang xác thực...</span>
+                    <span>Đang xác thực quyền Admin...</span>
                   </>
                 ) : (
                   <>
@@ -226,11 +248,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 )}
               </button>
             </form>
+
+            {/* Google Firebase Auth Admin Sign-In */}
+            <div className="mt-4 pt-4 border-t border-slate-800/80">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={isLoading || isGoogleLoading}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+              >
+                {isGoogleLoading ? (
+                  <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                )}
+                <span>Đăng nhập bằng tài khoản Google Admin (Firebase Auth)</span>
+              </button>
+            </div>
           </div>
-
-          
         </div>
-
       </div>
     </div>
   );

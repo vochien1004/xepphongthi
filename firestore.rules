@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Hàm kiểm tra user đã đăng nhập và có field role == 'admin' trong bảng users
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Cho phép khởi tạo/cập nhật bản ghi admin của chính user khi đăng nhập
+    match /users/{userId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Cho phép admin toàn quyền trên TẤT CẢ các bảng (collection)
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

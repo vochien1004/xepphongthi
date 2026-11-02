@@ -79,4 +79,17 @@ export interface FirebaseSettings {
   messagingSenderId: string;
   appId: string;
   isConfigured: boolean;
+  adminEmail?: string;
+  adminPassword?: string;
 }
+
+export interface FirestoreUserRecord {
+  uid: string;
+  username: string;
+  email?: string;
+  fullName: string;
+  role: 'admin';
+  updatedAt: string;
+  createdAt?: string;
+}
+

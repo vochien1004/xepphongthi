@@ -104,8 +104,9 @@ export default function App() {
     return arrangeRooms(students, config);
   }, [students, config]);
 
-  // Setup Real-time Firebase Firestore Listener
+  // Setup Real-time Firebase Firestore Listener (only when Admin is logged in)
   useEffect(() => {
+    if (!currentUser) return;
     let isMounted = true;
     setSyncStatus((prev) => ({ ...prev, state: 'connecting' }));
 
@@ -153,10 +154,10 @@ export default function App() {
     // Check if cloud has snapshot
     pullDataFromFirebase(firebaseSettings).then((res) => {
       if (isMounted && res.data) {
-        if (res.data.students) setStudents(res.data.students);
-        if (res.data.config) setConfig(res.data.config);
-        if (res.data.subjects) setSubjects(res.data.subjects);
-        if (res.data.schedules) setSchedules(res.data.schedules);
+        if (res.data.students && res.data.students.length > 0) setStudents(res.data.students);
+        if (res.data.config && res.data.config.schoolName) setConfig(res.data.config);
+        if (res.data.subjects && res.data.subjects.length > 0) setSubjects(res.data.subjects);
+        if (res.data.schedules && res.data.schedules.length > 0) setSchedules(res.data.schedules);
       }
     });
 
@@ -164,7 +165,14 @@ export default function App() {
       isMounted = false;
       unsubscribe();
     };
-  }, [firebaseSettings.apiKey, firebaseSettings.projectId]);
+  }, [
+    currentUser?.username,
+    currentUser?.uid,
+    firebaseSettings.apiKey,
+    firebaseSettings.projectId,
+    firebaseSettings.adminEmail,
+    firebaseSettings.adminPassword,
+  ]);
 
   // Trigger Debounced Real-time Cloud Push whenever user mutates data locally
   const pushLocalChangesToCloud = useCallback(
@@ -316,6 +324,7 @@ export default function App() {
       <LoginPage
         onLoginSuccess={(user) => setCurrentUser(user)}
         schoolName={config.schoolName}
+        firebaseSettings={firebaseSettings}
       />
     );
   }
