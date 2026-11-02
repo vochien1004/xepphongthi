@@ -140,21 +140,52 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     return c.startsWith(classGradeFilter);
   });
 
-  // Calculate student count for a single subject in this grade
-  const getSubjectStudentCount = (subId: string): number => {
-    let filtered = students.filter((s) => (s.khoi || '').trim() === selectedGrade.trim());
+  // Calculate student count for a single subject in a given grade based on "Môn học theo lớp"
+  const getSubjectStudentCountForGrade = (grade: string, subId: string): number => {
+    const gradeStudents = students.filter((s) => (s.khoi || '').trim() === grade.trim());
+    if (gradeStudents.length === 0) return 0;
+
     if (config.classSubjects) {
-      filtered = filtered.filter((s) => {
-        const allowedSubs = config.classSubjects?.[s.lop];
-        return !allowedSubs || allowedSubs.length === 0 || allowedSubs.includes(subId);
-      });
+      const classSubjects = config.classSubjects;
+      const gradeClasses = Array.from(new Set(gradeStudents.map((s) => s.lop).filter(Boolean)));
+      const hasClassSubjectConfig =
+        gradeClasses.some((cls) => Array.isArray(classSubjects[cls])) ||
+        Object.values(classSubjects).some((arr) => Array.isArray(arr) && arr.length > 0);
+
+      if (hasClassSubjectConfig) {
+        return gradeStudents.filter((s) => {
+          const allowedSubs = classSubjects[s.lop];
+          return Array.isArray(allowedSubs) && allowedSubs.includes(subId);
+        }).length;
+      }
     }
-    return filtered.length;
+
+    return gradeStudents.length;
+  };
+
+  // Calculate student count for a single subject in the currently selected grade
+  const getSubjectStudentCount = (subId: string): number => {
+    return getSubjectStudentCountForGrade(selectedGrade, subId);
   };
 
   // Evaluate room allocation status for a single subject in the selected grade
+  // Compares allocated seats strictly against the number of students taking that subject (from Môn học theo lớp).
+  // Subjects with 0 students (not taken by any class) never trigger surplus/shortage warnings.
   const getSubjectAllocationInfo = (subId: string) => {
     const count = getSubjectStudentCount(subId);
+
+    // If no classes take this subject (0 hs), do NOT warn about surplus/shortage seats
+    if (count === 0) {
+      return {
+        count: 0,
+        isAllocated: false,
+        roomCount: 0,
+        allocatedSeats: 0,
+        diff: 0,
+        status: 'no_students' as const,
+      };
+    }
+
     const plan = config.manualRoomPlans?.[`${selectedGrade}_${subId}`];
     const hasPlan = Boolean(plan && Array.isArray(plan.rooms) && plan.rooms.length > 0);
 
@@ -174,7 +205,7 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     const diff = allocatedSeats - count;
 
     let status: 'unallocated' | 'matched' | 'shortage' | 'surplus' = 'matched';
-    if (count === 0 && allocatedSeats === 0) {
+    if (allocatedSeats === 0) {
       status = 'unallocated';
     } else if (diff < 0) {
       status = 'shortage';
@@ -194,23 +225,21 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     };
   };
 
-  // Calculate representative total eligible students for currently selected subjects
+  // Calculate eligible students strictly for the currently selected subject(s)
+  // Never falls back to total students in the grade when a subject has 0 students or fewer students
   const totalEligibleCount = useMemo(() => {
-    const totalInGrade = students.filter((s) => (s.khoi || '').trim() === selectedGrade.trim()).length;
     if (selectedSubjectIds.length === 0) {
-      return totalInGrade;
+      return 0;
     }
-    // Return max students among selected subjects
     const counts = selectedSubjectIds.map((id) => getSubjectStudentCount(id));
-    const maxVal = Math.max(...counts, 0);
-    return maxVal > 0 ? maxVal : totalInGrade;
+    return Math.max(...counts, 0);
   }, [students, selectedGrade, selectedSubjectIds, config.classSubjects]);
 
-  // Retrieve current room plan
+  // Retrieve current room plan for the selected subject(s)
   const currentPlan: GradeSubjectRoomPlan = useMemo(() => {
     const plans = config.manualRoomPlans || {};
-    
-    // 1. Try to match any of the selected subjects
+
+    // 1. Try to match any of the selected subjects that has students
     for (const subId of selectedSubjectIds) {
       const key = `${selectedGrade}_${subId}`;
       if (plans[key] && plans[key].rooms && plans[key].rooms.length > 0) {
@@ -218,18 +247,24 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       }
     }
 
-    // 2. Try grade-level default template
-    if (plans[selectedGrade] && plans[selectedGrade].rooms && plans[selectedGrade].rooms.length > 0) {
-      return plans[selectedGrade];
-    }
-    if (plans[`${selectedGrade}_all`] && plans[`${selectedGrade}_all`].rooms && plans[`${selectedGrade}_all`].rooms.length > 0) {
-      return plans[`${selectedGrade}_all`];
-    }
-    
-    // 3. Auto-calculate initial rooms based on standard 24 students/room
+    // 2. Auto-calculate initial rooms based on the selected subject's actual student count (totalEligibleCount)
     const defaultCap = config.gradeConfigs?.[selectedGrade]?.maxPerRoom || config.defaultMaxPerRoom || 24;
+    if (totalEligibleCount <= 0) {
+      return {
+        grade: selectedGrade,
+        roomCount: 1,
+        rooms: [
+          {
+            roomCode: `${config.roomPrefix || 'P'}1`,
+            roomNumber: 1,
+            capacity: 0,
+            location: `Phòng 1 (Lớp ${selectedGrade}A1)`,
+          },
+        ],
+      };
+    }
+
     const estimatedRoomsCount = Math.max(1, Math.ceil(totalEligibleCount / defaultCap) || 1);
-    
     const initialRooms: ManualRoomSpec[] = [];
     let remaining = totalEligibleCount;
 
@@ -237,7 +272,7 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       initialRooms.push({
         roomCode: `${config.roomPrefix || 'P'}${i}`,
         roomNumber: i,
-        capacity: totalEligibleCount > 0 ? (i === estimatedRoomsCount ? remaining : defaultCap) : defaultCap,
+        capacity: i === estimatedRoomsCount ? remaining : defaultCap,
         location: `Phòng ${i} (Lớp ${selectedGrade}A${i})`,
       });
       remaining -= defaultCap;
@@ -267,8 +302,20 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
 
     const updatedPlans = { ...(config.manualRoomPlans || {}) };
 
-    // Save for every checked subject
+    // Clean up any stale room plans for subjects in this grade that have 0 students
+    gradeSubjects.forEach((sub) => {
+      if (getSubjectStudentCount(sub.id) === 0) {
+        delete updatedPlans[`${selectedGrade}_${sub.id}`];
+      }
+    });
+
+    // Save for every checked subject that has students (or if explicitly selected)
     selectedSubjectIds.forEach((subId) => {
+      const subCount = getSubjectStudentCount(subId);
+      if (subCount === 0) {
+        delete updatedPlans[`${selectedGrade}_${subId}`];
+        return;
+      }
       updatedPlans[`${selectedGrade}_${subId}`] = {
         ...updatedPlan,
         grade: selectedGrade,
@@ -276,8 +323,8 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       };
     });
 
-    // Also update Grade default template if applyToGradeDefault is explicitly checked or all subjects selected
-    if (applyToGradeDefault || (selectedSubjectIds.length > 0 && selectedSubjectIds.length === gradeSubjects.length)) {
+    // Also update Grade default template only if applyToGradeDefault is explicitly checked
+    if (applyToGradeDefault) {
       updatedPlans[selectedGrade] = {
         ...updatedPlan,
         grade: selectedGrade,
@@ -309,10 +356,12 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     });
   };
 
-  // Select all subjects for current grade
+  // Select all subjects for current grade (prioritizes subjects that have students > 0)
   const handleSelectAllSubjects = () => {
-    setSelectedSubjectIds(gradeSubjects.map((s) => s.id));
-    showToast(`Đã chọn tất cả ${gradeSubjects.length} môn của Khối ${selectedGrade}`);
+    const subjectsWithStudents = gradeSubjects.filter((s) => getSubjectStudentCount(s.id) > 0);
+    const targetIds = subjectsWithStudents.length > 0 ? subjectsWithStudents.map((s) => s.id) : gradeSubjects.map((s) => s.id);
+    setSelectedSubjectIds(targetIds);
+    showToast(`Đã chọn ${targetIds.length} môn có học sinh dự thi của Khối ${selectedGrade}`);
   };
 
   // Deselect all subjects
@@ -320,7 +369,7 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
     setSelectedSubjectIds([]);
   };
 
-  // Multi-subject Preset filters
+  // Multi-subject Preset filters (only selects subjects that actually have students if any exist)
   const handleSelectSubjectPreset = (presetType: 'khtn' | 'khxh' | 'core') => {
     let matchedSubjects: Subject[] = [];
     if (presetType === 'khtn') {
@@ -334,7 +383,8 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       matchedSubjects = gradeSubjects.filter((s) => keywords.some((k) => s.name.toLowerCase().includes(k)));
     }
 
-    const matchedIds = matchedSubjects.map((s) => s.id);
+    const activeMatched = matchedSubjects.filter((s) => getSubjectStudentCount(s.id) > 0);
+    const matchedIds = (activeMatched.length > 0 ? activeMatched : matchedSubjects).map((s) => s.id);
     setSelectedSubjectIds(matchedIds);
     showToast(`Đã chọn ${matchedIds.length} môn theo tổ hợp ${presetType.toUpperCase()}`);
   };
@@ -450,7 +500,7 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       if (idx === roomCount - 1) {
         return { ...r, capacity: Math.max(0, remaining) };
       }
-      const cap = Math.min(standardCap, remaining > 0 ? remaining : standardCap);
+      const cap = Math.min(standardCap, remaining > 0 ? remaining : 0);
       remaining -= cap;
       return { ...r, capacity: cap };
     });
@@ -500,39 +550,37 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
   const handleExecuteCopyGrade = () => {
     if (copyTargetGrades.length === 0) return;
     const updatedPlans = { ...(config.manualRoomPlans || {}) };
+    const defaultCap = config.defaultMaxPerRoom || 24;
+    const prefix = config.roomPrefix || 'P';
 
     copyTargetGrades.forEach((tgtGrade) => {
-      const tgtStudentCount = students.filter((s) => (s.khoi || '').trim() === tgtGrade.trim()).length;
-      const roomCount = currentPlan.rooms.length;
-      const basePerRoom = Math.floor(tgtStudentCount / roomCount) || 24;
-      let remainder = tgtStudentCount % roomCount;
-
-      const adaptedRooms: ManualRoomSpec[] = currentPlan.rooms.map((r) => {
-        let cap = basePerRoom;
-        if (remainder > 0) {
-          cap += 1;
-          remainder--;
-        }
-        return {
-          ...r,
-          capacity: tgtStudentCount > 0 ? cap : (r.capacity || 24),
-          location: `Phòng ${r.roomNumber} (Lớp ${tgtGrade}A${r.roomNumber})`,
-        };
-      });
-
-      updatedPlans[tgtGrade] = {
-        grade: tgtGrade,
-        subjectId: 'all',
-        roomCount: roomCount,
-        rooms: adaptedRooms,
-      };
-
-      // Also copy to all subjects in target grade
+      // Copy per-subject plans adapted to each subject's actual student count in tgtGrade
       subjects.filter((sub) => sub.grades.includes(tgtGrade)).forEach((sub) => {
+        const subStudentCount = getSubjectStudentCountForGrade(tgtGrade, sub.id);
+        if (subStudentCount <= 0) {
+          delete updatedPlans[`${tgtGrade}_${sub.id}`];
+          return;
+        }
+
+        const roomCount = Math.max(1, Math.ceil(subStudentCount / defaultCap));
+        let remaining = subStudentCount;
+        const adaptedRooms: ManualRoomSpec[] = [];
+
+        for (let i = 1; i <= roomCount; i++) {
+          const cap = i === roomCount ? remaining : Math.min(defaultCap, remaining);
+          remaining = Math.max(0, remaining - cap);
+          adaptedRooms.push({
+            roomCode: `${prefix}${i}`,
+            roomNumber: i,
+            capacity: cap,
+            location: `Phòng ${i} (Lớp ${tgtGrade}A${i})`,
+          });
+        }
+
         updatedPlans[`${tgtGrade}_${sub.id}`] = {
           grade: tgtGrade,
           subjectId: sub.id,
-          roomCount: roomCount,
+          roomCount,
           rooms: adaptedRooms,
         };
       });
@@ -543,7 +591,7 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
       manualRoomPlans: updatedPlans,
     });
 
-    showToast(`Đã sao chép cấu hình phòng sang ${copyTargetGrades.map((g) => `Khối ${g}`).join(', ')} và lưu trên Firebase!`);
+    showToast(`Đã sao chép và cân đối phân phòng theo sĩ số từng môn sang ${copyTargetGrades.map((g) => `Khối ${g}`).join(', ')}!`);
     setIsCopyGradeModalOpen(false);
   };
 
@@ -941,6 +989,8 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
                   let cardStyle = 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-700';
                   if (isChecked) {
                     cardStyle = 'bg-blue-50/90 border-blue-500 ring-2 ring-blue-500/30 text-blue-950 shadow-2xs';
+                  } else if (info.status === 'no_students') {
+                    cardStyle = 'bg-slate-50/40 border-slate-200/80 hover:bg-slate-100/70 text-slate-500';
                   } else if (info.status === 'matched') {
                     cardStyle = 'bg-emerald-50/40 border-emerald-300 hover:bg-emerald-50/80 text-slate-800';
                   } else if (info.status === 'shortage') {
@@ -985,7 +1035,11 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
 
                       {/* Allocation status / warning badge */}
                       <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
-                        {info.status === 'matched' ? (
+                        {info.status === 'no_students' ? (
+                          <span className="inline-flex items-center space-x-1 font-medium text-slate-400 bg-slate-100/80 px-2 py-0.5 rounded-md w-full">
+                            <span className="truncate">Các lớp không chọn thi (0 hs)</span>
+                          </span>
+                        ) : info.status === 'matched' ? (
                           <span className="inline-flex items-center space-x-1 font-semibold text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-md w-full">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span className="truncate">Đã phân phòng ({info.roomCount}P • {info.allocatedSeats}/{info.count} chỗ)</span>
@@ -1161,44 +1215,83 @@ export const RoomConfig: React.FC<RoomConfigProps> = ({
             </div>
 
             {/* Real-time Scientific Balance Status Bar */}
-            <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-              seatDifference === 0
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                : seatDifference < 0
-                ? 'bg-amber-50 border-amber-300 text-amber-900'
-                : 'bg-purple-50 border-purple-300 text-purple-900'
-            }`}>
-              <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
-                  seatDifference === 0 ? 'bg-emerald-600 text-white' : seatDifference < 0 ? 'bg-amber-600 text-white' : 'bg-purple-600 text-white'
-                }`}>
-                  {seatDifference === 0 ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                </div>
-                <div>
-                  <div className="font-bold text-xs sm:text-sm">
-                    {seatDifference === 0 ? (
-                      <span>✅ Phân bổ chính xác 100%: {totalAllocatedSeats} / {totalEligibleCount} học sinh</span>
-                    ) : seatDifference < 0 ? (
-                      <span>⚠️ Thiếu {Math.abs(seatDifference)} chỗ ngồi (Đã xếp {totalAllocatedSeats} / {totalEligibleCount} học sinh)</span>
-                    ) : (
-                      <span>ℹ️ Dư {seatDifference} chỗ ngồi (Tổng xếp {totalAllocatedSeats} / {totalEligibleCount} học sinh thực tế)</span>
-                    )}
+            {selectedSubjectIds.length === 0 ? (
+              <div className="p-4 rounded-xl border bg-slate-50 border-slate-200 text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+                    <BookOpen className="w-4 h-4" />
                   </div>
-                  <div className="text-[11px] opacity-80">
-                    Đang áp dụng cho <strong>{selectedSubjectIds.length}</strong> môn học thuộc Khối {selectedGrade}. Dữ liệu được lưu trữ và đồng bộ hóa trực tiếp trên Firebase.
+                  <div>
+                    <div className="font-bold text-xs sm:text-sm text-slate-800">
+                      Chưa chọn môn thi cần phân phòng
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Vui lòng tích chọn môn thi ở <strong>Mục 2</strong> bên trên để phân phòng và đối chiếu số chỗ ngồi theo đúng số học sinh dự thi môn đó.
+                    </div>
                   </div>
                 </div>
               </div>
+            ) : totalEligibleCount === 0 ? (
+              <div className="p-4 rounded-xl border bg-slate-50 border-slate-200 text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+                    <Check className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs sm:text-sm text-slate-800">
+                      Môn học đang chọn có 0 học sinh dự thi (Các lớp không chọn thi môn này)
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Không có học sinh nào của Khối {selectedGrade} đăng ký học/thi môn này nên không cần phân phòng thi.
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 text-xs font-mono font-bold shrink-0">
+                  <span className="bg-white px-2.5 py-1 rounded-md border border-slate-200 text-slate-500">
+                    Số HS thi môn này: 0 hs
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                seatDifference === 0
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                  : seatDifference < 0
+                  ? 'bg-amber-50 border-amber-300 text-amber-900'
+                  : 'bg-purple-50 border-purple-300 text-purple-900'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
+                    seatDifference === 0 ? 'bg-emerald-600 text-white' : seatDifference < 0 ? 'bg-amber-600 text-white' : 'bg-purple-600 text-white'
+                  }`}>
+                    {seatDifference === 0 ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs sm:text-sm">
+                      {seatDifference === 0 ? (
+                        <span>✅ Phân bổ chính xác 100%: {totalAllocatedSeats} / {totalEligibleCount} học sinh dự thi môn này</span>
+                      ) : seatDifference < 0 ? (
+                        <span>⚠️ Thiếu {Math.abs(seatDifference)} chỗ ngồi so với số HS thi môn này (Đã xếp {totalAllocatedSeats} / {totalEligibleCount} học sinh)</span>
+                      ) : (
+                        <span>ℹ️ Dư {seatDifference} chỗ ngồi so với số HS thi môn này (Tổng xếp {totalAllocatedSeats} / {totalEligibleCount} học sinh dự thi)</span>
+                      )}
+                    </div>
+                    <div className="text-[11px] opacity-80">
+                      Đang áp dụng cho <strong>{selectedSubjectIds.length}</strong> môn học đã chọn thuộc Khối {selectedGrade} (tính theo danh sách Môn học theo lớp).
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex items-center space-x-2 text-xs font-mono font-bold shrink-0">
-                <span className="bg-white/80 px-2.5 py-1 rounded-md border">
-                  Cần xếp: {totalEligibleCount} hs
-                </span>
-                <span className="bg-white/80 px-2.5 py-1 rounded-md border">
-                  Đã chia: {totalAllocatedSeats} hs
-                </span>
+                <div className="flex items-center space-x-2 text-xs font-mono font-bold shrink-0">
+                  <span className="bg-white/80 px-2.5 py-1 rounded-md border">
+                    HS thi môn này: {totalEligibleCount} hs
+                  </span>
+                  <span className="bg-white/80 px-2.5 py-1 rounded-md border">
+                    Đã chia: {totalAllocatedSeats} chỗ
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Step 4: Room Cards Grid (P1, P2, ..., PN) */}
             <div>

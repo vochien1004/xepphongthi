@@ -75,10 +75,18 @@ export function arrangeRooms(
 
     // If subjectId is provided and class-subject restriction is configured, filter students
     if (subjectId && config.classSubjects) {
-      gradeStudents = gradeStudents.filter((s) => {
-        const allowedSubs = config.classSubjects?.[s.lop];
-        return !allowedSubs || allowedSubs.length === 0 || allowedSubs.includes(subjectId);
-      });
+      const classSubjects = config.classSubjects;
+      const gradeClasses = Array.from(new Set(gradeStudents.map((s) => s.lop).filter(Boolean)));
+      const hasClassSubjectConfig =
+        gradeClasses.some((cls) => Array.isArray(classSubjects[cls])) ||
+        Object.values(classSubjects).some((arr) => Array.isArray(arr) && arr.length > 0);
+
+      if (hasClassSubjectConfig) {
+        gradeStudents = gradeStudents.filter((s) => {
+          const allowedSubs = classSubjects[s.lop];
+          return Array.isArray(allowedSubs) && allowedSubs.includes(subjectId);
+        });
+      }
     }
 
     const sortedStudents = sortStudents(gradeStudents, config.sortBy);
