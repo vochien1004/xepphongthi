@@ -55,8 +55,9 @@ table.admin-table th,
 table.admin-table td {
   border: 1px solid #000000 !important;
   color: #000000 !important;
-  padding: 4px 6px !important;
+  padding: 5px 6px !important;
   box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
 /* Print specific styles */
@@ -87,8 +88,10 @@ table.admin-table td {
 
   .print-page {
     width: 100% !important;
-    min-height: 100vh !important;
-    padding: 10mm 12mm !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     background: white !important;
     color: black !important;

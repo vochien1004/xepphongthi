@@ -146,8 +146,8 @@ export async function downloadSampleExcelTemplate() {
   const ws = workbook.addWorksheet('DanhSachHocSinh', { views: [{ showGridLines: true }] });
 
   ws.columns = [
-    { header: 'SoBD', key: 'soBD', width: 12 },
-    { header: 'HoTen', key: 'hoTen', width: 25 },
+    { header: 'SoBD', key: 'soBD', width: 15 },
+    { header: 'HoTen', key: 'hoTen', width: 24 },
     { header: 'Lop', key: 'lop', width: 10 },
     { header: 'Khoi', key: 'khoi', width: 8 },
     { header: 'NgaySinh', key: 'ngaySinh', width: 14 },
@@ -207,8 +207,8 @@ export async function exportRoomsToExcel(rooms: RoomAssignment[], schoolName: st
 
     ws.columns = [
       { header: 'TT', key: 'tt', width: 6 },
-      { header: 'Số BD', key: 'soBD', width: 12 },
-      { header: 'Họ và tên', key: 'hoTen', width: 26 },
+      { header: 'Số BD', key: 'soBD', width: 15 },
+      { header: 'Họ và tên', key: 'hoTen', width: 24 },
       { header: 'Lớp', key: 'lop', width: 10 },
       { header: 'Khối', key: 'khoi', width: 8 },
       { header: 'Ngày sinh', key: 'ngaySinh', width: 14 },
@@ -505,8 +505,8 @@ export async function exportGradeEntryExcelFile(
     // Column widths matching exact layout
     ws.columns = [
       { key: 'tt', width: 6 },        // TT
-      { key: 'soBD', width: 12 },      // Số BD
-      { key: 'hoTen', width: 26 },     // Họ và tên
+      { key: 'soBD', width: 15 },      // Số BD
+      { key: 'hoTen', width: 24 },     // Họ và tên
       { key: 'lop', width: 10 },       // Lớp
       { key: 'ngaySinh', width: 14 },  // Ngày sinh
       { key: 'danToc', width: 12 },    // Dân tộc

@@ -240,8 +240,8 @@ export const PrintRoomList: React.FC<PrintRoomListProps> = ({
       const ws = XLSX.utils.json_to_sheet(data);
       ws['!cols'] = [
         { wch: 6 },
-        { wch: 12 },
-        { wch: 26 },
+        { wch: 15 },
+        { wch: 24 },
         { wch: 10 },
         { wch: 8 },
         { wch: 14 },
@@ -539,11 +539,19 @@ export const PrintRoomList: React.FC<PrintRoomListProps> = ({
                       color: '#000000'
                     }}
                   >
+                    <colgroup>
+                      <col style={{ width: '6%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '40%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '15%' }} />
+                      <col style={{ width: '16%' }} />
+                    </colgroup>
                     <thead>
                       <tr style={{ backgroundColor: '#f8fafc', fontWeight: 'bold', textAlign: 'center' }}>
                         <th style={{ width: '6%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'center', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal' }}>TT</th>
-                        <th style={{ width: '10%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'center', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', whiteSpace: 'nowrap' }}>Số BD</th>
-                        <th style={{ width: '44%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'left', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', whiteSpace: 'nowrap' }}>Họ và tên</th>
+                        <th style={{ width: '14%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'center', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', whiteSpace: 'nowrap' }}>Số BD</th>
+                        <th style={{ width: '40%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'left', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', whiteSpace: 'nowrap' }}>Họ và tên</th>
                         <th style={{ width: '9%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'center', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', whiteSpace: 'nowrap' }}>Lớp</th>
                         <th style={{ width: '15%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'center', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', whiteSpace: 'nowrap' }}>Ngày sinh</th>
                         <th style={{ width: '16%', border: '1px solid #000000', fontSize: '16px', fontWeight: 'bold', padding: '5px 6px', textAlign: 'center', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal' }}>Ghi chú</th>
@@ -552,12 +560,12 @@ export const PrintRoomList: React.FC<PrintRoomListProps> = ({
                     <tbody>
                       {room.students.map((st, idx) => (
                         <tr key={st.id}>
-                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center' }}>{idx + 1}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.soBD}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'left', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.hoTen}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.lop}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center', whiteSpace: 'nowrap' }}>{st.ngaySinh}</td>
-                          <td style={{ border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center' }}>{st.ghiChu || ''}</td>
+                          <td style={{ width: '6%', border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center' }}>{idx + 1}</td>
+                          <td style={{ width: '14%', border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden' }}>{st.soBD}</td>
+                          <td style={{ width: '40%', border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'left', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.hoTen}</td>
+                          <td style={{ width: '9%', border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{st.lop}</td>
+                          <td style={{ width: '15%', border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center', whiteSpace: 'nowrap' }}>{st.ngaySinh}</td>
+                          <td style={{ width: '16%', border: '1px solid #000000', fontSize: '16px', padding: '5px 6px', lineHeight: '1.25', verticalAlign: 'middle', fontStretch: 'normal', textAlign: 'center' }}>{st.ghiChu || ''}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -158,7 +158,11 @@ export async function exportHtmlToPdf(
             tbl.style.fontFamily = "'Times New Roman', Tinos, Times, serif";
             tbl.style.color = '#000000';
 
-            tbl.querySelectorAll<HTMLTableCellElement>('th').forEach((th) => {
+            const headerWidths: string[] = [];
+            tbl.querySelectorAll<HTMLTableCellElement>('th').forEach((th, idx) => {
+              if (th.style.width) {
+                headerWidths[idx] = th.style.width;
+              }
               th.style.border = '1px solid #000000';
               th.style.padding = '5px 6px';
               th.style.fontWeight = 'bold';
@@ -169,17 +173,24 @@ export async function exportHtmlToPdf(
               th.style.backgroundColor = '#f8fafc';
               th.style.color = '#000000';
               th.style.boxSizing = 'border-box';
+              th.style.overflow = 'hidden';
             });
 
-            tbl.querySelectorAll<HTMLTableCellElement>('td').forEach((td) => {
-              td.style.border = '1px solid #000000';
-              td.style.padding = '5px 6px';
-              td.style.fontSize = '16px';
-              td.style.lineHeight = '1.25';
-              td.style.verticalAlign = 'middle';
-              td.style.fontStretch = 'normal';
-              td.style.color = '#000000';
-              td.style.boxSizing = 'border-box';
+            tbl.querySelectorAll<HTMLTableRowElement>('tbody tr').forEach((tr) => {
+              tr.querySelectorAll<HTMLTableCellElement>('td').forEach((td, idx) => {
+                if (headerWidths[idx] && !td.style.width) {
+                  td.style.width = headerWidths[idx];
+                }
+                td.style.border = '1px solid #000000';
+                td.style.padding = '5px 6px';
+                td.style.fontSize = '16px';
+                td.style.lineHeight = '1.25';
+                td.style.verticalAlign = 'middle';
+                td.style.fontStretch = 'normal';
+                td.style.color = '#000000';
+                td.style.boxSizing = 'border-box';
+                td.style.overflow = 'hidden';
+              });
             });
           }
         });
